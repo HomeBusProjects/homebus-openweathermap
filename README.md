@@ -1,20 +1,20 @@
-# HomeBus-SNMP
+# HomeBus-OpenWeatherMap
 
-This is a simple HomeBus data source which queries a router using SNMP to track current bandwidth and the number of active hosts.
+This is a simple HomeBus data source which collects weather conditions from OpenWeatherMap.
 
 ## Usage
 
-On its first run, `homebus-snmp` needs to know how to find the HomeBus provisioning server.
+On its first run, `homebus-openweathermap` needs to know how to find the HomeBus provisioning server.
 
 ```
-bundle exec homebus-snmp -b homebus-server-IP-or-domain-name -P homebus-server-port
+bundle exec homebus-openweathermap -b homebus-server-IP-or-domain-name -P homebus-server-port
 ```
 
 The port will usually be 80 (its default value).
 
 Once it's provisioned it stores its provisioning information in `.env.provisioning`.
 
-`homebus-snmp` also needs to know:
+`homebus-openweathermap` also needs to know:
 
 - the IP address or name of the router it's monitoring
 - the interface name or IP address of the network interface it's monitoring
