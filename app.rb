@@ -26,7 +26,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
   def rewrite_current(conditions)
     { 
-      temperature: K_to_C(conditions[:main][:temp]),
+      temperature: ("%0.2f" % K_to_C(conditions[:main][:temp])).to_f,
       humidity:  conditions[:main][:humidity],
       pressure: conditions[:main][:pressure],
       visibility: conditions[:visbility],
