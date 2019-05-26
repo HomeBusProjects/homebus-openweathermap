@@ -32,8 +32,8 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
       visibility: conditions[:visbility],
       wind: conditions[:wind],
       rain: conditions[:rain],
-      conditions_short: conditions[0][:main],
-      conditions_long: conditions[0][:description]
+      conditions_short: conditions[:weather][0][:main],
+      conditions_long: conditions[:weather][0][:description]
     }
   end
 
