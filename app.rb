@@ -20,16 +20,35 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
     60*15
   end
 
+  def K_to_C(temp)
+    temp - 273.15
+  end
+
+  def rewrite_current(conditions)
+    { 
+      temperature: K_to_C(conditions[:main][:temp]),
+      humidity:  conditions[:main][:humidity],
+      pressure: conditions[:main][:pressure],
+      visibility: conditions[:visbility],
+      wind: conditions[:wind],
+      rain: conditions[:rain],
+      conditions_short: weather[0][:main],
+      conditions_long: weather[0][:description],
+    }
+  end
+
   def work!
     response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/weather?lat=#{ENV['LATITUDE']}&lon=#{ENV['LONGITUDE']}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
     if response.is_a?(Net::HTTPSuccess)
-      current = JSON.parse response.body
+      current = JSON.parse response.body, symbolize_names: true
 
       timestamp = Time.now.to_i
-      @mqtt.publish "/weather/current", JSON.generate({ id: @uuid,
-                                                        timestamp: timestamp,
-                                                        current: current
-                                                      })
+      @mqtt.publish "/weather/current",
+                    JSON.generate({ id: @uuid,
+                                    timestamp: timestamp,
+                                    weather: rewrite_current(current)
+                                  }),
+                    true
     else
       puts "ERROR #{response.message}"
       @matt.publish '/weather/$error', JSON.generate({ id: @uuid,

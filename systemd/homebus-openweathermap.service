@@ -1,4 +1,4 @@
-Unit]
+[Unit]
 Description=HomeBus OpenWeatherMap publisher
 After=network.target
 
