@@ -29,7 +29,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
       temperature: ("%0.2f" % K_to_C(conditions[:main][:temp])).to_f,
       humidity:  conditions[:main][:humidity],
       pressure: conditions[:main][:pressure],
-      visibility: conditions[:visbility],
+      visibility: conditions[:visibility],
       wind: conditions[:wind],
       rain: conditions[:rain],
       conditions_short: conditions[:weather][0][:main],
