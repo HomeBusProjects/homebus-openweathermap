@@ -7,13 +7,18 @@ require 'dotenv'
 require 'json'
 
 class OpenWeatherMapHomeBusApp < HomeBusApp
+  DDC = 'org.homebus.experimental.weather'
+
   def initialize(options)
     @options = options
+
     super
   end
 
   def setup!
     Dotenv.load('.env')
+    @latitude = ENV['LATITUDE']
+    @longitude = ENV['LONGITUDE']
   end
 
   def update_delay
@@ -37,25 +42,41 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
     }
   end
 
-  def work!
-    response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/weather?lat=#{ENV['LATITUDE']}&lon=#{ENV['LONGITUDE']}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
-    if response.is_a?(Net::HTTPSuccess)
-      current = JSON.parse response.body, symbolize_names: true
+  # forecast samples: https://samples.openweathermap.org/data/2.5/forecast?lat=35&lon=139&appid=b6907d289e10d714a6e88b30761fae22
+  # https://openweathermap.org/forecast5
+  def rewrite_forecast(forecast)
+    {
+      days: 1,
+      forecast: [
+      ]
+    }
+  end
 
-      timestamp = Time.now.to_i
-      @mqtt.publish "/weather/current",
-                    JSON.generate({ id: @uuid,
-                                    timestamp: timestamp,
-                                    weather: rewrite_current(current)
-                                  }),
-                    true
-    else
-      puts "ERROR #{response.message}"
-      @matt.publish '/weather/$error', JSON.generate({ id: @uuid,
-                                                      timestamp: timestamp,
-                                                      message: response.message})
+  def _get_weather
+    begin
+      response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/weather?lat=#{@latitude}&lon=#{@longitude}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
+      if response.is_a?(Net::HTTPSuccess)
+        JSON.parse response.body, symbolize_names: true
+      else
+        nil
+      end
+    rescue
+      nil
     end
+  end
 
+  def work!
+    conditions = _get_weather
+    if conditions
+      weather = {
+        id: @uuid,
+        timestamp: Time.now.to_i
+      }
+
+      weather[DDC] = rewrite_current conditions
+      publish! DDC, weather
+    end
+  
 #### Forecast JSON currently exceeds the indexing abilities of the database, so don't bother for now
 if false
     response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/forecast?lat=#{ENV['LATITUDE']}&lon=#{ENV['LONGITUDE']}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
@@ -95,7 +116,7 @@ end
   end
 
   def serial_number
-    ''
+    "#{@latitude}-#{@longitude}"
   end
 
   def pin
@@ -110,17 +131,7 @@ end
         index: 0,
         accuracy: 0,
         precision: 0,
-        wo_topics: [ '/weather/conditions' ],
-        ro_topics: [],
-        rw_topics: []
-      },
-      { friendly_name: 'Weather forecast',
-        friendly_location: 'Portland, OR',
-        update_frequency: update_delay,
-        accuracy: 0,
-        precision: 0,
-        index: 1,
-        wo_topics: [ '/weather/forecast' ],
+        wo_topics: [ DDC ],
         ro_topics: [],
         rw_topics: []
       }
