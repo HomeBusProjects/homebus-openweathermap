@@ -19,6 +19,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
     Dotenv.load('.env')
     @latitude = ENV['LATITUDE']
     @longitude = ENV['LONGITUDE']
+    @openweathermap_appid = ENV['OPENWEATHERMAP_APPID']
   end
 
   def update_delay
@@ -54,7 +55,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
   def _get_weather
     begin
-      response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/weather?lat=#{@latitude}&lon=#{@longitude}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
+      response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/weather?lat=#{@latitude}&lon=#{@longitude}&APPID=#{@openweathermap_appid}")
       if response.is_a?(Net::HTTPSuccess)
         JSON.parse response.body, symbolize_names: true
       else
@@ -67,6 +68,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
   def work!
     conditions = _get_weather
+
     if conditions
       weather = {
         id: @uuid,
