@@ -71,11 +71,13 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
     if conditions
       weather = {
-        id: @uuid,
-        timestamp: Time.now.to_i
+        source: @uuid,
+        timestamp: Time.now.to_i,
+        contents: {
+          ddc: DDC,
+          payload: rewrite_current(conditions)
       }
 
-      weather[DDC] = rewrite_current conditions
       publish! DDC, weather
     end
   
