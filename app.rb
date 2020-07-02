@@ -76,6 +76,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
         contents: {
           ddc: DDC,
           payload: rewrite_current(conditions)
+        }
       }
 
       publish! DDC, weather
