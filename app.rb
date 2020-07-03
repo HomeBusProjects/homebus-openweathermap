@@ -70,16 +70,7 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
     conditions = _get_weather
 
     if conditions
-      weather = {
-        source: @uuid,
-        timestamp: Time.now.to_i,
-        contents: {
-          ddc: DDC,
-          payload: rewrite_current(conditions)
-        }
-      }
-
-      publish! DDC, weather
+      publish! DDC, rewrite_current(conditions)
     end
   
 #### Forecast JSON currently exceeds the indexing abilities of the database, so don't bother for now
