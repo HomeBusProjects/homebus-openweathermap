@@ -3,7 +3,7 @@
 require './options'
 require './app'
 
-openweathermap_app_options = OpenWeatherMapHomeBusAppOptions.new
+openweathermap_app_options = OpenWeatherMapHomebusAppOptions.new
 
-openweathermap = OpenWeatherMapHomeBusApp.new openweathermap_app_options.options
+openweathermap = OpenWeatherMapHomebusApp.new openweathermap_app_options.options
 openweathermap.run!

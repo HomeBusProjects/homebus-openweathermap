@@ -1,13 +1,14 @@
 # coding: utf-8
 require 'homebus'
-require 'homebus_app'
-require 'mqtt'
-require 'net/http'
 require 'dotenv'
+
+require 'net/http'
 require 'json'
 
-class OpenWeatherMapHomeBusApp < HomeBusApp
-  DDC = 'org.homebus.experimental.weather'
+class OpenWeatherMapHomebusApp < Homebus::App
+  DDC_CURRENT = 'org.homebus.experimental.weather'
+  DDC_FORECAST = 'org.homebus.experimental.weather-forecast'
+  DDC_UVINDEX = 'org.homebus.experimental.uv-light-sensor'
 
   def initialize(options)
     @options = options
@@ -17,12 +18,19 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
   def setup!
     Dotenv.load('.env')
+
+    @location = ENV['LOCATION']
     @latitude = ENV['LATITUDE']
     @longitude = ENV['LONGITUDE']
     @openweathermap_appid = ENV['OPENWEATHERMAP_APPID']
+
+    @device = Homebus::Device.new  name: "Weather conditions for #{@location}",
+                                   manufacturer: 'Homebus',
+                                   model: 'Openweathermap publisher',
+                                   serial_number: "#{@location}"
   end
 
-  def update_delay
+  def update_interval
     60*15
   end
 
@@ -32,30 +40,45 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
   def rewrite_current(conditions)
     { 
-      temperature: ("%0.2f" % K_to_C(conditions[:main][:temp])).to_f,
-      humidity:  conditions[:main][:humidity],
-      pressure: conditions[:main][:pressure],
-      visibility: conditions[:visibility],
-      wind: conditions[:wind],
-      rain: conditions[:rain],
-      conditions_short: conditions[:weather][0][:main],
-      conditions_long: conditions[:weather][0][:description]
+      temperature: ("%0.2f" % K_to_C(conditions[:current][:temp])).to_f,
+      humidity:  conditions[:current][:humidity],
+      pressure: conditions[:current][:pressure],
+      visibility: conditions[:current][:visibility],
+      wind: conditions[:current][:wind_speed],
+      rain: conditions[:current][:rain],
+      conditions_short: conditions[:current][:weather][0][:main],
+      conditions_long: conditions[:current][:weather][0][:description]
     }
   end
 
-  # forecast samples: https://samples.openweathermap.org/data/2.5/forecast?lat=35&lon=139&appid=b6907d289e10d714a6e88b30761fae22
+  def rewrite_uv(conditions)
+    { 
+      uvindex: conditions[:current][:uvi]
+    }
+  end
+
+  def rewrite_uv_forecast(conditions)
+    days = conditions[:daily].map { |day| day[:uvi] }
+
+    {
+      forecast: days
+    }
+  end
+
+  # forecast samples: https://samples.openweathermap.org/data/2.5/onecall?lat=35&lon=139&appid=b6907d289e10d714a6e88b30761fae22
   # https://openweathermap.org/forecast5
   def rewrite_forecast(forecast)
+    days = conditions[:daily].ap { |day| rewrite_current day }
+
     {
-      days: 1,
-      forecast: [
-      ]
+      days: days.length,
+      forecast: days
     }
   end
 
   def _get_weather
     begin
-      response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/weather?lat=#{@latitude}&lon=#{@longitude}&APPID=#{@openweathermap_appid}")
+      response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/onecall?lat=#{@latitude}&lon=#{@longitude}&exclude=minutely,hourly&APPID=#{@openweathermap_appid}")
       if response.is_a?(Net::HTTPSuccess)
         JSON.parse response.body, symbolize_names: true
       else
@@ -68,69 +91,33 @@ class OpenWeatherMapHomeBusApp < HomeBusApp
 
   def work!
     conditions = _get_weather
+pp conditions
+pp rewrite_current(conditions)
+pp rewrite_forecast(conditions)
+pp rewrite_uv(conditions)
 
     if conditions
-      publish! DDC, rewrite_current(conditions)
+      @device.publish! DDC_CURRENT, rewrite_current(conditions)
+      @device.publish! DDC_UVINDEX, rewrite_uv(conditions)
     end
   
 #### Forecast JSON currently exceeds the indexing abilities of the database, so don't bother for now
 if false
     response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/forecast?lat=#{ENV['LATITUDE']}&lon=#{ENV['LONGITUDE']}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
-    if response.is_a?(Net::HTTPSuccess)
-      forecast = JSON.parse response.body
-
-      timestamp = Time.now.to_i
-      @mqtt.publish '/weather/forecast', JSON.generate({ id: @uuid,
-                                                         timestamp: timestamp,
-                                                         forecast: forecast
-                                                       })
-    else
-      puts "ERROR #{response.message}"
-      @matt.publish '/weather/$error', JSON.generate({ id: @uuid,
-                                                      timestamp: timestamp,
-                                                      message: response.message})
-    end
 end
 
     sleep update_delay
   end
 
-  def manufacturer
-    'HomeBus'
+  def name
+    'OpenWeathermap publisher'
   end
 
-  def model
-    'OpenWeatherMap'
-  end
-
-  def friendly_name
-    'Weather conditions and forecast'
-  end
-
-  def friendly_location
-    'Portland, OR'
-  end
-
-  def serial_number
-    "#{@latitude}-#{@longitude}"
-  end
-
-  def pin
-    ''
+  def publishes
+    [ DDC_CURRENT, DDC_UVINDEX ]
   end
 
   def devices
-    [
-      { friendly_name: 'Weather conditions',
-        friendly_location: 'Portland, OR',
-        update_frequency: update_delay,
-        index: 0,
-        accuracy: 0,
-        precision: 0,
-        wo_topics: [ DDC ],
-        ro_topics: [],
-        rw_topics: []
-      }
-    ]
+    [ @device ]
   end
 end
