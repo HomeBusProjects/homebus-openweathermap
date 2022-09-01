@@ -58,7 +58,7 @@ class HomebusOpenweathermap::App < Homebus::App
   end
 
   def rewrite_uv_forecast(conditions)
-    days = conditions[:daily].map { |day| day[:uvi] }
+    days = forecast[:daily].map { |day| day[:uvi] }
 
     {
       forecast: days
@@ -106,7 +106,7 @@ if false
     response = Net::HTTP.get_response('api.openweathermap.org', "/data/2.5/forecast?lat=#{ENV['LATITUDE']}&lon=#{ENV['LONGITUDE']}&APPID=#{ENV['OPENWEATHERMAP_APPID']}")
 end
 
-    sleep update_delay
+    sleep update_interval
   end
 
   def name
