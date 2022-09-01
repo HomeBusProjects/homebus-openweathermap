@@ -58,9 +58,9 @@ class HomebusOpenweathermap::App < Homebus::App
   end
 
   def rewrite_uv_forecast(conditions)
-    days = forecast[:daily].map { |day| day[:uvi] }
+    days = conditions[:daily].map { |day| day[:uvi] }
 
-    {
+    return {
       forecast: days
     }
   end
@@ -68,9 +68,9 @@ class HomebusOpenweathermap::App < Homebus::App
   # forecast samples: https://samples.openweathermap.org/data/2.5/onecall?lat=35&lon=139&appid=b6907d289e10d714a6e88b30761fae22
   # https://openweathermap.org/forecast5
   def rewrite_forecast(forecast)
-    days = conditions[:daily].ap { |day| rewrite_current day }
+    days = forecast[:daily].ap { |day| rewrite_current day }
 
-    {
+    return {
       days: days.length,
       forecast: days
     }
