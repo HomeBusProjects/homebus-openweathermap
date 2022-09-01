@@ -91,10 +91,6 @@ class HomebusOpenweathermap::App < Homebus::App
 
   def work!
     conditions = _get_weather
-pp conditions
-pp rewrite_current(conditions)
-pp rewrite_forecast(conditions)
-pp rewrite_uv(conditions)
 
     if conditions
       @device.publish! DDC_CURRENT, rewrite_current(conditions)
