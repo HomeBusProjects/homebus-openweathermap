@@ -5,7 +5,7 @@ require 'dotenv'
 require 'net/http'
 require 'json'
 
-class OpenWeatherMapHomebusApp < Homebus::App
+class HomebusOpenweathermap::App < Homebus::App
   DDC_CURRENT = 'org.homebus.experimental.weather'
   DDC_FORECAST = 'org.homebus.experimental.weather-forecast'
   DDC_UVINDEX = 'org.homebus.experimental.uv-light-sensor'

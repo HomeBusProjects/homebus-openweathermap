@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'homebus-openweathermap/options'
+require 'homebus-openweathermap/app'
+
+app_options = HomebusOpenweathermap::Options.new
+
+app = HomebusOpenweathermap::App.new app_options.options
+app.run!

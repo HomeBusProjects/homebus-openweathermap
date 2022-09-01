@@ -1,16 +1,13 @@
 [Unit]
-Description=HomeBus OpenWeatherMap publisher
+Description=HomeBus publisher
 After=network.target
 
 [Service]
 Type=simple
-
 User=homebus
 WorkingDirectory=/home/homebus/homebus-openweathermap
-
-ExecStart=/home/homebus/.rbenv/bin/rbenv exec bundle exec homebus-openweathermap.rb
+ExecStart=/home/homebus/.rbenv/bin/rbenv exec bundle exec bin/homebus-openweathermap
 TimeoutSec=30
-
 Restart=always
 
 [Install]

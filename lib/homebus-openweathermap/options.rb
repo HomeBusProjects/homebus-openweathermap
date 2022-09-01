@@ -1,6 +1,7 @@
 require 'homebus'
+require 'homebus-openweathermap/version'
 
-class OpenWeatherMapHomebusAppOptions < Homebus::Options
+class HomebusOpenweathermap::Options < Homebus::Options
   def app_options(op)
   end
 
@@ -9,7 +10,7 @@ class OpenWeatherMapHomebusAppOptions < Homebus::Options
   end
 
   def version
-    '0.0.2'
+    HomebusOpenweathermap::VERSION
   end
 
   def name
